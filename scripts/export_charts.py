@@ -5,8 +5,8 @@ import argparse, subprocess, shutil, sys
 from pathlib import Path
 
 CHROME = ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "google-chrome", "chromium", "chrome"]
-SHOTS = [("calibration", "/calibration", 1400, 1100), ("fomc-2026-09", "/events/fomc-2026-09", 1400, 720),
-         ("fomc-2026-12", "/events/fomc-2026-12", 1400, 720), ("overview", "/", 1400, 1500)]
+SHOTS = [("landing", "/?static=1", 1440, 7400), ("hero", "/", 1440, 900), ("calibration", "/calibration", 1400, 1100), ("fomc-2026-09", "/events/fomc-2026-09", 1400, 720),
+         ("fomc-2026-12", "/events/fomc-2026-12", 1400, 720), ("overview", "/app", 1400, 1500)]
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("--base", default="http://localhost:5174"); ap.add_argument("--out", default="data/charts")

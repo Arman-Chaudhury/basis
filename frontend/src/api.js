@@ -16,5 +16,5 @@ export const api = {
 }
 export const pct = (x, d = 0) => (x == null ? '—' : `${(x * 100).toFixed(d)}%`)
 export const pp = x => (x == null ? '—' : `${x > 0 ? '+' : ''}${(x * 100).toFixed(1)}pp`)
-export const COLORS = { kalshi: '#22d3ee', polymarket: '#a78bfa', proxy: '#f59e0b', grid: '#1f2937', text: '#94a3b8', ref: '#475569' }
-export function trustColor(s) { return s >= 70 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : s >= 40 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-rose-500/15 text-rose-300 border-rose-500/30' }
+export const COLORS = { kalshi: '#E1E5E5', polymarket: '#7C8A8A', proxy: '#C9A96E', grid: '#1F2218', text: '#6F7676', ref: '#3A3F3F' }
+export function trustColor(s) { return s >= 70 ? 'bg-emerald-400/10 text-emerald-200 border-emerald-400/30' : s >= 40 ? 'bg-brass/10 text-brass border-brass/40' : 'bg-rose-400/10 text-rose-200 border-rose-400/30' }
