@@ -1,6 +1,8 @@
 import React, { useEffect, useImperativeHandle, useMemo, useRef, forwardRef } from 'react'
 import * as THREE from 'three'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { EffectComposer } from '@react-three/postprocessing'
+import { MotionBlur } from './MotionBlur.jsx'
 
 /* A stepped contour landscape of the event map, in one fragment shader.
    Height = Σ_i h_i · exp(−|q − c_i|² / σ_i²): one peak per event, placed by (basis, trust),
@@ -131,11 +133,11 @@ const CAMS = {
   map: { pos: [0.0, -3.0, 3.4], target: [0, 0.9, 0] },
 }
 
-function Field({ api }) {
+function Field({ api, speed }) {
   const { camera } = useThree()
   const st = useRef({ morph: 0, tMorph: 0, cam: 'hero', form: 1, tForm: 1, shape: 0, tShape: 0, flow: 1.0, boost: 0, phase: 0, trail: [], trailI: 0 })
   const mat = useMemo(() => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: VERT, fragmentShader: FRAG,
-    uniforms: { uCenter: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector2()) }, uHeight: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector3()) }, uSigma: { value: new Float32Array(MAX_EV).fill(0.5) }, uCount: { value: 0 }, uMorph: { value: 0 }, uTime: { value: 0 }, uSteps: { value: 14 }, uFringe: { value: 0.6 }, uGrain: { value: 0.06 }, uTrail: { value: Array.from({ length: 8 }, () => new THREE.Vector3(99, 99, 99)) }, uBase: { value: new THREE.Color('#E9E9E7') }, uForm: { value: 1 }, uShape: { value: 0 }, uFlow: { value: 0.7 }, uFlowPhase: { value: 0 }, uGlow: { value: 0.9 } } }), [])
+    uniforms: { uCenter: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector2()) }, uHeight: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector3()) }, uSigma: { value: new Float32Array(MAX_EV).fill(0.5) }, uCount: { value: 0 }, uMorph: { value: 0 }, uTime: { value: 0 }, uSteps: { value: 14 }, uFringe: { value: 0.6 }, uGrain: { value: 0.0 }, uTrail: { value: Array.from({ length: 8 }, () => new THREE.Vector3(99, 99, 99)) }, uBase: { value: new THREE.Color('#E9E9E7') }, uForm: { value: 1 }, uShape: { value: 0 }, uFlow: { value: 0.7 }, uFlowPhase: { value: 0 }, uGlow: { value: 0.9 } } }), [])
   const tmp = useMemo(() => ({ v: new THREE.Vector3(), t: new THREE.Vector3() }), [])
   useImperativeHandle(api, () => ({
     setEvents: evs => {
@@ -161,6 +163,7 @@ function Field({ api }) {
     s.morph += (s.tMorph - s.morph) * k; s.form += (s.tForm - s.form) * k; s.shape += (s.tShape - s.shape) * k * 0.8
     s.boost *= Math.exp(-dt * 2.0)
     s.phase += dt * (s.flow + s.boost)
+    if (speed) speed.current = s.flow + s.boost
     u.uMorph.value = s.morph; u.uForm.value = s.form; u.uShape.value = s.shape; u.uFlowPhase.value = s.phase; u.uTime.value += dt
     for (let i = 0; i < 8; i++) { const tr = s.trail[i]; if (tr) { tr.t += dt; u.uTrail.value[i].set(tr.x, tr.y, tr.t) } }
     const c = CAMS[s.cam] || CAMS.hero
@@ -189,10 +192,12 @@ function Pointer({ api }) {
 }
 
 const Terrain = forwardRef(function Terrain({ className = '' }, api) {
+  const speed = useRef(1)
   return (
     <div className={`absolute inset-0 ${className}`}>
       <Canvas dpr={[1, 1.5]} camera={{ fov: 58, near: 0.05, far: 30, position: CAMS.hero.pos }} gl={{ antialias: true, alpha: false }} onCreated={({ gl }) => gl.setClearColor('#F2F2F0', 1)}>
-        <Field api={api} /><Pointer api={api} />
+        <Field api={api} speed={speed} /><Pointer api={api} />
+        <EffectComposer disableNormalPass multisampling={0}><MotionBlur speed={speed} /></EffectComposer>
       </Canvas>
     </div>
   )
