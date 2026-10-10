@@ -67,6 +67,8 @@ def summarize(ev, all_vols=None):
     p_cal = calibration.calibrate(p_raw)
     prices = db.get_prices(CON, ev["id"])
     proxy_rows = db.get_proxy(CON, ev["id"])
+    if ev.get("settled"):  # after resolution the proxy is trivially 0/1; show the series only up to the meeting
+        proxy_rows = [r for r in proxy_rows if r[0] <= ev["resolution_date"]]
     p_proxy = proxy_rows[-1][1] if proxy_rows else None
     proxy_detail = proxy_rows[-1][2] if proxy_rows else None
     # basis uses the venue with the longest history for the z-score window

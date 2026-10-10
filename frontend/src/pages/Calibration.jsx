@@ -29,7 +29,7 @@ export default function Calibration() {
       <div className="card">
         <div className="h-[520px]">
           <ResponsiveContainer>
-            <ComposedChart margin={{ top: 20, right: 30, bottom: 20, left: 10 }}>
+            <ComposedChart margin={{ top: 10, right: 30, bottom: 24, left: 10 }}>
               <CartesianGrid stroke={COLORS.grid} strokeDasharray="3 3" />
               <XAxis dataKey="x" type="number" domain={[0, 1]} tickFormatter={v => `${Math.round(v * 100)}¢`} tick={{ fill: COLORS.text, fontSize: 11 }} label={{ value: 'market price (YES)', position: 'insideBottom', offset: -8, fill: COLORS.text, fontSize: 12 }} />
               <YAxis dataKey="y" type="number" domain={[0, 1]} tickFormatter={v => `${Math.round(v * 100)}%`} tick={{ fill: COLORS.text, fontSize: 11 }} width={48} label={{ value: 'empirical win rate', angle: -90, position: 'insideLeft', fill: COLORS.text, fontSize: 12 }} />
@@ -41,10 +41,10 @@ export default function Calibration() {
                   if (p.bin) return <div className="rounded border border-slate-700 bg-[#0b0f14] p-2 text-xs"><div className="text-white">bin {p.bin}</div><div>n = {p.n.toLocaleString()}</div><div>avg price {(p.x * 100).toFixed(1)}¢</div><div>win rate {(p.y * 100).toFixed(1)}%</div></div>
                   return <div className="rounded border border-slate-700 bg-[#0b0f14] p-2 text-xs"><div>price {(p.x * 100).toFixed(0)}¢ → calibrated {(p.fit * 100).toFixed(1)}%</div></div>
                 }} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Legend verticalAlign="top" height={28} wrapperStyle={{ fontSize: 12 }} />
               <Line data={diag} dataKey="d" name="perfect calibration" stroke={COLORS.ref} strokeDasharray="6 4" dot={false} isAnimationActive={false} />
               <Line data={curve} dataKey="fit" name="isotonic fit" stroke={COLORS.proxy} strokeWidth={2.5} dot={false} isAnimationActive={false} />
-              <Scatter data={bins} name="5¢ bins (size = n)" fill={COLORS.kalshi} fillOpacity={0.75} />
+              <Scatter data={bins} name="5¢ bins (size = n)" fill={COLORS.kalshi} fillOpacity={0.75} isAnimationActive={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>

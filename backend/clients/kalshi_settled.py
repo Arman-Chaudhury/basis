@@ -19,7 +19,7 @@ def _iso(ts):
     return datetime.fromisoformat(ts.replace("Z", "+00:00"))
 
 
-def sample_settled(days=180, window=7, per_window=400, min_hours=48, pages=6):
+def sample_settled(days=365, window=7, per_window=600, min_hours=36, pages=8):
     now = int(time.time())
     out = []
     for w in range(days // window):
@@ -73,7 +73,7 @@ def preclose_price(m, hours_before=12):
     return best
 
 
-def settled_with_preclose(max_markets=3000, workers=1):
+def settled_with_preclose(max_markets=5000, workers=1):
     cands = sample_settled()
     log.info("%d candidate settled markets", len(cands))
     cands = cands[:max_markets]

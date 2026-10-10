@@ -10,6 +10,7 @@ from sklearn.isotonic import IsotonicRegression
 from backend.config import CALIBRATION_PATH
 
 _curve = None  # cached {"x": [...], "y": [...]}
+_mtime = None
 
 
 def fit(settled):
@@ -41,10 +42,12 @@ def fit(settled):
 
 
 def load():
-    global _curve
-    if _curve is None:
-        if not CALIBRATION_PATH.exists():
-            return None
+    global _curve, _mtime
+    if not CALIBRATION_PATH.exists():
+        return None
+    mt = CALIBRATION_PATH.stat().st_mtime
+    if _curve is None or mt != _mtime:
+        _mtime = mt
         d = json.loads(CALIBRATION_PATH.read_text())
         _curve = {"x": np.array([c["p"] for c in d["curve"]]), "y": np.array([c["p_cal"] for c in d["curve"]]), "raw": d}
     return _curve

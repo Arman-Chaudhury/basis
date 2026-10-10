@@ -55,9 +55,9 @@ export default function Event() {
               <YAxis domain={[0, 1]} tickFormatter={v => `${Math.round(v * 100)}%`} tick={{ fill: COLORS.text, fontSize: 11 }} width={44} />
               <Tooltip contentStyle={{ background: '#0b0f14', border: '1px solid #1f2937', fontSize: 12 }} formatter={(v, n) => [pct(v, 1), n]} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              {ev.history.kalshi && <Line type="monotone" dataKey="kalshi" name="Kalshi" stroke={COLORS.kalshi} dot={false} strokeWidth={2} connectNulls />}
-              {ev.history.polymarket && <Line type="monotone" dataKey="polymarket" name="Polymarket" stroke={COLORS.polymarket} dot={false} strokeWidth={2} connectNulls />}
-              {proxyPts > 1 && <Line type="stepAfter" dataKey="proxy" name={`Proxy (${ev.proxy_type})`} stroke={COLORS.proxy} dot={false} strokeWidth={2} strokeDasharray="5 3" connectNulls />}
+              {ev.history.kalshi && <Line type="monotone" dataKey="kalshi" name="Kalshi" stroke={COLORS.kalshi} dot={false} strokeWidth={2} connectNulls isAnimationActive={false} />}
+              {ev.history.polymarket && <Line type="monotone" dataKey="polymarket" name="Polymarket" stroke={COLORS.polymarket} dot={false} strokeWidth={2} connectNulls isAnimationActive={false} />}
+              {proxyPts > 1 && <Line type="stepAfter" dataKey="proxy" name={`Proxy (${ev.proxy_type})`} stroke={COLORS.proxy} dot={false} strokeWidth={2} strokeDasharray="5 3" connectNulls isAnimationActive={false} />}
               {proxyPts === 1 && <ReferenceLine y={ev.p_proxy} stroke={COLORS.proxy} strokeDasharray="5 3" label={{ value: `proxy ${pct(ev.p_proxy)}`, fill: COLORS.proxy, fontSize: 11, position: 'insideTopRight' }} />}
               {ev.proxy?.meeting_date && <ReferenceLine x={ev.proxy.meeting_date} stroke={COLORS.ref} label={{ value: 'FOMC', fill: COLORS.text, fontSize: 11 }} />}
             </LineChart>
