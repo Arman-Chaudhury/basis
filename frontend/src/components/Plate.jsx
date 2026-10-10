@@ -6,7 +6,7 @@ import { COMMON, INIT_FRAG, STEP_FRAG, GRAIN_VERT, GRAIN_FRAG, PLATE_VERT, PLATE
 import { modesFor, fieldAt, ampMax, plateParamsFor } from './plateField.js'
 export { plateParamsFor as paramsFor }
 
-const SAND = { gamma: 4.5, stepScale: 0.0045, slopeBias: 0.15, flightRate: 6, sprinkle: 0.4, hopHeight: 0.02 }
+const SAND = { gamma: 4.5, stepScale: 0.0045, slopeBias: 0.18, flightRate: 6, sprinkle: 0.4, hopHeight: 0.02 }
 const CAMERAS = {
   tilt: { pos: [0.0, -2.9, 3.4], target: [0, 0.1, 0], offset: 0.62 },
   overhead: { pos: [0.0, -1.1, 4.3], target: [0, 0.0, 0], offset: 0.6 },
@@ -41,7 +41,7 @@ function Sand({ api, texSize, cameraName }) {
     return { a, b, init, step, cam, cur: a, nxt: b, inited: false }
   }, [texSize])
   const grainMat = useMemo(() => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: GRAIN_VERT, fragmentShader: GRAIN_FRAG, transparent: true, depthWrite: false, depthTest: true, blending: THREE.NormalBlending, premultipliedAlpha: true,
-    uniforms: { uPosTex: { value: null }, uAuxTex: { value: null }, uTexSize: { value: texSize }, uPlateHalfSize: { value: new THREE.Vector2(1, 1) }, uGrainWorldSize: { value: 0.0062 }, uHopScale: { value: 0.05 }, uProjectionScale: { value: 1000 }, uReveal: { value: 0 }, uDisplace: { value: 0.05 }, uPhase: { value: 0 }, uSandColor: { value: SAND_COLOR }, uLightDir: { value: new THREE.Vector3(0, 0, 1) }, uAirborneGlow: { value: 0.35 }, ...shared } }), [texSize])
+    uniforms: { uPosTex: { value: null }, uAuxTex: { value: null }, uTexSize: { value: texSize }, uPlateHalfSize: { value: new THREE.Vector2(1, 1) }, uGrainWorldSize: { value: 0.0056 }, uHopScale: { value: 0.05 }, uProjectionScale: { value: 1000 }, uReveal: { value: 0 }, uDisplace: { value: 0.05 }, uPhase: { value: 0 }, uSandColor: { value: SAND_COLOR }, uLightDir: { value: new THREE.Vector3(0, 0, 1) }, uAirborneGlow: { value: 0.35 }, ...shared } }), [texSize])
   const grainGeo = useMemo(() => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(texSize * texSize * 3), 3)); g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 3); return g }, [texSize])
   const plateMat = useMemo(() => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: PLATE_VERT, fragmentShader: PLATE_FRAG,
     uniforms: { uDisplace: { value: 0.05 }, uPhase: { value: 0 }, uBaseColor: { value: PLATE_COLOR }, uGlowColor: { value: GLOW_COLOR }, uLightDir: { value: new THREE.Vector3(0, 0, 1) }, uGlow: { value: 0.35 }, uRipple: { value: 1 }, uRippleStrength: { value: 0 }, uRippleOrigin: { value: new THREE.Vector2() }, uEdge: { value: 0 }, ...shared } }), [])

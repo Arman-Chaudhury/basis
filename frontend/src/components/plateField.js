@@ -2,7 +2,7 @@
 const BASE_HZ = 211 / 5 // (1,2) mode of the reference plate: f ∝ m² + n²
 export const RESONANCES = [242, 523, 744, 1117, 1443, 1590, 1939, 2478, 2768, 2953]
 
-export function modesFor(f, drive = [0, 0], width = 90, count = 12) {
+export function modesFor(f, drive = [0, 0], width = 42, count = 10) {
   const out = []
   for (let m = 1; m <= 9; m++) for (let n = m + 1; n <= 10; n++) {
     const fk = BASE_HZ * (m * m + n * n)
@@ -41,7 +41,7 @@ export function plateParamsFor(e) {
   const lo = Math.floor(idx), t = idx - lo
   const f = RESONANCES[lo] + (RESONANCES[Math.min(lo + 1, RESONANCES.length - 1)] - RESONANCES[lo]) * t
   const trust = Math.min(Math.max((e.trust_score ?? 50) / 100, 0.05), 1)
-  const gamma = 2.6 + (1 - trust) * 6
+  const gamma = 5.5 + (1 - trust) * 5
   const b = Math.max(-0.25, Math.min(0.25, e.basis ?? 0))
   return { f: Math.round(f), gamma: +gamma.toFixed(2), drive: [+(b * 2.4).toFixed(2), 0] }
 }
