@@ -8,13 +8,13 @@ import { gsap, ScrollTrigger } from '../lib/smooth.js'
 
 /* Seven chapters. Each nudges the plate: m from probability, n from basis, sharp from trust. */
 const CHAPTERS = [
-  { k: '01', t: 'The raw odds', h: 'Sand on a plate.', p: 'A prediction market price is thousands of small bets scattered across a surface. Read it raw and you are reading sand before the plate is struck.', plate: { m: 2.3, n: 3.1, sharp: 0.12 } },
-  { k: '02', t: 'The bias', h: 'A 40¢ contract is not a 40% event.', p: 'Across 628 settled Kalshi markets, contracts priced 20–45¢ resolved YES about 30% of the time, and 95¢ contracts only 84%. The favorite–longshot bias is the plate\'s stiffness: it sets where the figure can form.', plate: { m: 3, n: 4, sharp: 0.3 } },
-  { k: '03', t: 'Calibration', h: 'The figure is the correction.', p: 'An isotonic curve fit on the price one day before close maps every raw price to how often that price actually paid. The grains stop scattering and find the nodal lines.', plate: { m: 4, n: 5, sharp: 0.55 } },
-  { k: '04', t: 'The proxy', h: 'The real market is already vibrating.', p: 'Fed-funds futures imply a probability of a hike. Deribit option prices imply a probability that Bitcoin clears a strike. These are the driving frequencies the prediction market should resonate with.', plate: { m: 5, n: 6, sharp: 0.6 } },
-  { k: '05', t: 'The basis', h: 'Between the resonances.', p: 'Basis is the gap between the prediction market and its proxy. In September the futures sat at 90% for a hike while both venues sat near 35% for two months. That gap was the trade.', plate: { m: 6, n: 3, sharp: 0.65 } },
-  { k: '06', t: 'Trust', h: 'Is this a market, or a rumor?', p: 'Liquidity, spread, freshness, holder concentration and horizon, scored 0–100. One trade larger than 5% of the day\'s tape raises a flag. Low trust is a loosely driven plate: the figure never sharpens.', plate: { m: 6, n: 7, sharp: 0.95 } },
-  { k: '07', t: 'What moves', h: 'Strike the plate, watch the room.', p: 'Event betas: the historical co-movement of TLT, XLF, the dollar and bitcoin with each event\'s probability. Co-movement, not causation, with R² and n shown. Drag the odds in the Lab and see the expected moves.', plate: { m: 7, n: 8, sharp: 0.85 } },
+  { k: '01', t: 'The raw odds', h: 'Sand on a plate.', p: 'A prediction market price is thousands of small bets scattered across a surface. Read it raw and you are reading sand before the plate is struck.', plate: { f: 300, gamma: 9, drive: [0.3, 0], camera: 'tilt' } },
+  { k: '02', t: 'The bias', h: 'A 40¢ contract is not a 40% event.', p: 'Across 628 settled Kalshi markets, contracts priced 20–45¢ resolved YES about 30% of the time, and 95¢ contracts only 84%. The favorite–longshot bias is the plate\'s stiffness: it sets where the figure can form.', plate: { f: 523, gamma: 6.5, drive: [0.15, 0], camera: 'tilt' } },
+  { k: '03', t: 'Calibration', h: 'The figure is the correction.', p: 'An isotonic curve fit on the price one day before close maps every raw price to how often that price actually paid. The grains stop scattering and find the nodal lines.', plate: { f: 744, gamma: 4.5, drive: [0, 0], camera: 'overhead' } },
+  { k: '04', t: 'The proxy', h: 'The real market is already vibrating.', p: 'Fed-funds futures imply a probability of a hike. Deribit option prices imply a probability that Bitcoin clears a strike. These are the driving frequencies the prediction market should resonate with.', plate: { f: 1117, gamma: 4.5, drive: [0, 0], camera: 'overhead' } },
+  { k: '05', t: 'The basis', h: 'Between the resonances.', p: 'Basis is the gap between the prediction market and its proxy. In September the futures sat at 90% for a hike while both venues sat near 35% for two months. That gap was the trade.', plate: { f: 1443, gamma: 4.0, drive: [0.5, 0], camera: 'detail' } },
+  { k: '06', t: 'Trust', h: 'Is this a market, or a rumor?', p: 'Liquidity, spread, freshness, holder concentration and horizon, scored 0–100. One trade larger than 5% of the day\'s tape raises a flag. Low trust is a loosely driven plate: the figure never sharpens.', plate: { f: 1590, gamma: 2.0, drive: [0, 0], camera: 'tilt' } },
+  { k: '07', t: 'What moves', h: 'Strike the plate, watch the room.', p: 'Event betas: the historical co-movement of TLT, XLF, the dollar and bitcoin with each event\'s probability. Co-movement, not causation, with R² and n shown. Drag the odds in the Lab and see the expected moves.', plate: { f: 1939, gamma: 2.5, drive: [0, 0], camera: 'detail' } },
 ]
 const FAQ = [
   ['Why not just use the raw odds?', 'Because a 10¢ contract isn\'t a 10% event, and a price with $300 of daily volume and one whale holding 98% is a rumor, not a market.'],
@@ -62,7 +62,7 @@ export default function Landing() {
     if (pNew == null || !featured) return
     const t = setTimeout(() => api.scenario(featured.id, pNew).then(setSc).catch(() => {}), 120)
     const q = paramsFor({ ...featured, p_calibrated: pNew })
-    plate.current?.set(q); sound.setFreq(120 + pNew * 520)
+    plate.current?.set(q); sound.setFreq(q.f * 0.25)
     return () => clearTimeout(t)
   }, [pNew, featured?.id])
 
@@ -73,7 +73,7 @@ export default function Landing() {
       gsap.utils.toArray('.chapter').forEach((el, i) => {
         ScrollTrigger.create({ trigger: el, start: 'top 55%', end: 'bottom 45%', onEnter: () => plate.current?.set(CHAPTERS[i].plate), onEnterBack: () => plate.current?.set(CHAPTERS[i].plate) })
       })
-      ScrollTrigger.create({ trigger: '#hero', start: 'top top', end: 'bottom 40%', onEnter: () => plate.current?.set(paramsFor(featured)), onEnterBack: () => plate.current?.set(paramsFor(featured)) })
+      ScrollTrigger.create({ trigger: '#hero', start: 'top top', end: 'bottom 40%', onEnter: () => plate.current?.set({ ...paramsFor(featured), camera: 'tilt' }), onEnterBack: () => plate.current?.set({ ...paramsFor(featured), camera: 'tilt' }) })
       ScrollTrigger.create({ trigger: '#lab', start: 'top 60%', onEnter: () => plate.current?.set(paramsFor({ ...featured, p_calibrated: pNew ?? featured?.p_raw })), onEnterBack: () => plate.current?.set(paramsFor({ ...featured, p_calibrated: pNew ?? featured?.p_raw })) })
       gsap.utils.toArray('.reveal').forEach(el => gsap.fromTo(el, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%' } }))
       gsap.to('#hero .hero-copy', { autoAlpha: 0, y: -40, ease: 'none', scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true } })
@@ -85,7 +85,7 @@ export default function Landing() {
   return (
     <div className={`-mt-14 relative ${isStatic ? "static-shot" : ""}`}>
       {/* fixed plate behind everything */}
-      <div className="plate-fixed"><Plate ref={plate} className={ready ? 'opacity-100 transition-opacity duration-1000' : 'opacity-0'} /></div>
+      <div className="plate-fixed"><Plate ref={plate} className={`transition-opacity duration-1000 ${ready ? "opacity-100" : "opacity-0"}`} /></div>
 
       {/* preloader */}
       {!ready && (
@@ -114,7 +114,7 @@ export default function Landing() {
             <div className="text-right">
               <div className="eyebrow mb-2">{featured.title}</div>
               <div className="numeral text-[7rem] md:text-[9rem] text-bone">{(featured.p_calibrated * 100).toFixed(0)}</div>
-              <div className="eyebrow">calibrated · raw {pct(featured.p_raw)} · trust {featured.trust_score}</div>
+              <div className="eyebrow">calibrated · raw {pct(featured.p_raw)} · trust {featured.trust_score} · {paramsFor(featured).f} Hz</div>
             </div>
           )}
         </div>
@@ -144,7 +144,7 @@ export default function Landing() {
             <input type="range" min="0" max="1" step="0.01" value={pNew ?? 0.5} onChange={e => setPNew(parseFloat(e.target.value))} className="flex-1" />
             <span className="numeral text-5xl w-24 text-right">{Math.round((pNew ?? 0.5) * 100)}</span>
           </div>
-          <div className="eyebrow mt-2">now {pct(featured?.p_raw, 1)} → {pct(pNew)} · {pp((pNew ?? 0) - (featured?.p_raw ?? 0))} · modes {fig ? `${paramsFor({ ...featured, p_calibrated: pNew }).m} / ${paramsFor({ ...featured, p_calibrated: pNew }).n}` : ''}</div>
+          <div className="eyebrow mt-2">now {pct(featured?.p_raw, 1)} → {pct(pNew)} · {pp((pNew ?? 0) - (featured?.p_raw ?? 0))} · drive {fig ? `${paramsFor({ ...featured, p_calibrated: pNew }).f} Hz · Γ ${paramsFor({ ...featured, p_calibrated: pNew }).gamma} g` : ''}</div>
         </div>
         <div className="reveal bg-ink/55 backdrop-blur-[2px] rounded-2xl p-6">
           <table className="w-full text-sm">
@@ -167,12 +167,12 @@ export default function Landing() {
       <section id="figures" className="relative z-10 bg-ink px-6 md:px-14 py-28">
         <div className="reveal flex items-end justify-between gap-8 flex-wrap">
           <div><div className="eyebrow mb-3">Figures · {events.length} events</div><h2 className="h2">Every event has a figure.</h2></div>
-          <p className="max-w-md text-grey-300">Mode numbers from the calibrated probability and the basis; sharpness from trust. A blurry figure is a market you should not trade on.</p>
+          <p className="max-w-md text-grey-300">Drive frequency from the calibrated probability, drive point from the basis, drive strength Γ from trust: a low-trust market is a hard-shaken plate whose sand never settles.</p>
         </div>
         <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
           {events.map(e => { const q = paramsFor(e); return (
             <Link to={`/events/${e.id}`} key={e.id} className="reveal group">
-              <div className="aspect-square rounded-xl border border-grey-700/60 bg-ink-2 grid place-items-center overflow-hidden group-hover:border-grey-300 transition-colors"><Figure m={q.m} n={q.n} sharp={q.sharp} size={220} /></div>
+              <div className="aspect-square rounded-xl border border-grey-700/60 bg-ink-2 grid place-items-center overflow-hidden group-hover:border-grey-300 transition-colors"><Figure f={q.f} gamma={q.gamma} drive={q.drive} size={220} /></div>
               <div className="mt-4 flex items-start justify-between gap-3">
                 <div><div className="text-bone leading-snug">{e.title}</div><div className="eyebrow mt-1">{e.category} · {pct(e.p_calibrated)} · {e.p_proxy == null ? 'no proxy' : pp(e.basis)}</div></div>
                 <TrustPill score={e.trust_score} leak={e.leakage_flag} />
