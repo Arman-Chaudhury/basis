@@ -70,5 +70,5 @@ def basis_stats(pm_series, proxy_series, window=30):
     sd = roll.std().iloc[-1]
     mu = roll.mean().iloc[-1]
     cur = float(df["basis"].iloc[-1])
-    z = float((cur - mu) / sd) if sd and not np.isnan(sd) and sd > 1e-6 else 0.0
+    z = float((cur - mu) / sd) if sd and not np.isnan(sd) and sd > 1e-6 else None
     return cur, z, [(d, float(v)) for d, v in df["basis"].items()]

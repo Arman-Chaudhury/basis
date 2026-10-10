@@ -8,9 +8,9 @@
 > sometimes lag the real market by weeks.
 >
 > **Basis** is the trust layer. For every event we pull Kalshi and Polymarket, and we answer three
-> questions. One: what's the *calibrated* probability? We fit an isotonic curve on hundreds of
-> settled Kalshi markets using the price a day before close — cheap contracts win less often than
-> they cost, expensive ones win more. Two: what's the *basis* — how far is the prediction market
+> questions. One: what's the *calibrated* probability? We fit an isotonic curve on 628 settled
+> Kalshi markets using the price a day before close — a 40¢ contract resolved YES 30% of the time,
+> a 98¢ contract only 84%. Two: what's the *basis* — how far is the prediction market
 > from what the traditional market already implies? For the Fed we use fed-funds futures; for Bitcoin,
 > Deribit option-implied probabilities. Three: should you *trust* this price at all? A 0–100 score
 > from liquidity, spread, freshness, holder concentration and horizon, with a leakage flag when one
@@ -27,9 +27,11 @@
 
 ## The three money charts
 
-1. **Calibration curve** (`/calibration`). Real settled Kalshi markets, 5¢ bins sized by n, isotonic
-   fit vs. the 45° line. The 0–5¢ bin resolves YES ~0% of the time; the 85–95¢ bins resolve YES
-   ~90–100%. Buyers of longshots overpay. Export: `data/charts/calibration.png`.
+1. **Calibration curve** (`/calibration`). 628 settled Kalshi markets, 5¢ bins sized by n, isotonic
+   fit vs. the 45° line. What the data actually says: contracts priced 20–45¢ resolved YES only ~30%
+   of the time, 60–80¢ contracts resolved YES ~50%, and 95¢+ "sure things" resolved YES 84% — so
+   buyers of mid-priced *and* near-certain YES overpaid, while 85–95¢ was well calibrated. The curve
+   is the correction. Export: `data/charts/calibration.png`.
 2. **Polymarket/Kalshi vs. fed-funds-implied P(hike), Sept 2026 FOMC** (`/events/fomc-2026-09`).
    The dashed futures line leads; the venues lag by ~2 months. Then the same chart for Dec 2026
    (`/events/fomc-2026-12`): futures 86%, venues 72–75% — the basis is open *right now*.

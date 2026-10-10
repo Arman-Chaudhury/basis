@@ -95,7 +95,7 @@ House, recession, Fed-chair). Matching across venues is *not* solved generically
   When FRED is down (it was during the build) the settled-September baseline is synthesised from the post-meeting
   contract minus the realised move and labelled as such in `proxy_detail`.
 - **Co-movement, not causation.** Betas use ≤ 1 year of daily data; R² is small; common drivers dominate.
-- **Small samples.** The calibration sample is a few thousand Kalshi markets over ~6 months, skewed to whatever Kalshi
+- **Small samples.** The calibration sample is 628 Kalshi markets over ~12 months (pre-close candles only; markets with no trades before the final day are dropped), skewed to whatever Kalshi
   listed; high-price bins have tens of observations. Polymarket calibration is not estimated.
 - **Holder concentration** comes from Polymarket's top-20 holder list only (Kalshi exposes none → 0.5 default).
 - **Trust is heuristic.** Weights are hand-set, not learned.

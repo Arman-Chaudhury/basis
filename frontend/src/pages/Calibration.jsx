@@ -23,8 +23,8 @@ export default function Calibration() {
       </div>
       <div className="grid gap-3 grid-cols-3">
         <div className="card py-3"><div className="text-xs text-slate-500">settled markets</div><div className="text-xl text-white mono">{c.n_markets.toLocaleString()}</div></div>
-        <div className="card py-3"><div className="text-xs text-slate-500">longshots (≤20¢) overpriced by</div><div className="text-xl text-white mono">{(low * 100).toFixed(1)}pp</div></div>
-        <div className="card py-3"><div className="text-xs text-slate-500">favorites (≥80¢) underpriced by</div><div className="text-xl text-white mono">{(hi * 100).toFixed(1)}pp</div></div>
+        <div className="card py-3"><div className="text-xs text-slate-500">longshots (≤20¢): price − win rate</div><div className="text-xl text-white mono">{(low * 100).toFixed(1)}pp</div></div>
+        <div className="card py-3"><div className="text-xs text-slate-500">favorites (≥80¢): win rate − price</div><div className="text-xl text-white mono">{(hi * 100).toFixed(1)}pp</div></div>
       </div>
       <div className="card">
         <div className="h-[520px]">
@@ -48,7 +48,7 @@ export default function Calibration() {
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-        <div className="text-xs text-slate-500 mt-2">Below the line = buyers of YES overpaid. The classic favorite–longshot bias: cheap contracts win less often than their price implies; expensive ones win more often.</div>
+        <div className="text-xs text-slate-500 mt-2">Below the 45° line = buyers of YES overpaid at that price; above = underpaid. The isotonic fit is the monotone correction Basis applies to every raw price.</div>
       </div>
       <div className="card p-0 overflow-x-auto">
         <table className="w-full text-sm">
