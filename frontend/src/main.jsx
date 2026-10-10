@@ -11,6 +11,8 @@ import { initSmooth, ScrollTrigger } from './lib/smooth.js'
 
 function Shell() {
   const [health, setHealth] = React.useState(null)
+  const [dark, setDark] = React.useState(() => new URLSearchParams(window.location.search).has('dark') || localStorage.getItem('basis-dark') === '1')
+  React.useEffect(() => { document.documentElement.classList.toggle('dark', dark); localStorage.setItem('basis-dark', dark ? '1' : '0') }, [dark])
   const loc = useLocation()
   React.useEffect(() => { api.health().then(setHealth).catch(() => setHealth({ ok: false })) }, [])
   React.useEffect(() => { const l = initSmooth(); l.scrollTo(0, { immediate: true }); ScrollTrigger.refresh() }, [loc.pathname])
@@ -31,13 +33,14 @@ function Shell() {
             {health?.demo_mode && <span className="rounded-full border border-brass/50 text-brass px-2 py-0.5">DEMO SNAPSHOT</span>}
             {health && !health.ok && <span className="rounded-full border border-rose-400/40 text-rose-200 px-2 py-0.5">API DOWN</span>}
             {!onLanding && health?.last_refresh?.ts && <span>refreshed {new Date(health.last_refresh.ts).toLocaleTimeString()}</span>}
+            <button onClick={() => setDark(d => !d)} className="btn-text" title="toggle theme">{dark ? 'Light' : 'Dark'}</button>
             {onLanding ? <Link to="/app" className="btn-text">Open the desk</Link> : <Link to="/" className="btn-text">Home</Link>}
           </div>
         </div>
       </header>
       <main className={onLanding ? '' : 'mx-auto max-w-7xl px-5 py-6'}>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<Landing dark={dark} />} />
           <Route path="/app" element={<Overview />} />
           <Route path="/events/:id" element={<Event />} />
           <Route path="/calibration" element={<Calibration />} />

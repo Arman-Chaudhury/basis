@@ -50,3 +50,18 @@ input[type=range] { accent-color: #E1E5E5; }
 .terrain-fixed { position: fixed; inset: 0; z-index: 0; }
 .caption { font-family: var(--font-display); font-weight: 300; letter-spacing: -0.03em; font-size: clamp(2.4rem, 6vw, 5.5rem); line-height: 1; }
 .static-shot .terrain-fixed { position: absolute; height: 900px; }
+
+/* dark variant of the topology theme (toggle in header, persisted) */
+html.dark {
+  --color-ink: #111113;
+  --color-ink-2: #18181B;
+  --color-ink-3: #222226;
+  --color-bone: #EDEDEA;
+  --color-grey-300: #B8B8B3;
+  --color-grey-500: #80807B;
+  --color-grey-700: #2E2E33;
+  --color-brass: #D9B46A;
+  color-scheme: dark;
+}
+html.dark .theme-invert { background: #F2F2F0; color: #151515; }
+html.dark .rule { background: rgba(237,237,234,0.3) !important; }

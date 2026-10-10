@@ -46,13 +46,14 @@ class MotionBlurEffect extends Effect {
 }
 
 /* `speed` is a ref: { value } in levels/s (flow + boost) from the terrain; blur distance follows it. */
-export const MotionBlur = forwardRef(function MotionBlur({ speed, base = 1.2, gain = 30 }, ref) {
+export const MotionBlur = forwardRef(function MotionBlur({ speed, base = 1.2, gain = 30, dark = false }, ref) {
   const effect = useMemo(() => new MotionBlurEffect(), [])
   const { size, viewport } = useThree()
   useFrame((_, dt) => {
     const u = effect.uniforms
     u.get('uResolution').value.set(size.width * viewport.dpr, size.height * viewport.dpr)
     u.get('uTime').value += dt
+    u.get('uExposure').value = dark ? 1.05 : 0.97; u.get('uBottomFade').value = dark ? 0.18 : 0.08; u.get('uNoise').value = dark ? 0.028 : 0.07
     const target = base + Math.max(0, (speed?.current ?? 0) - 1.0) * gain
     const cur = u.get('uDistance').value
     u.get('uDistance').value = cur + (target - cur) * (1 - Math.exp(-dt * 6))

@@ -26,7 +26,7 @@ const FAQ = [
   ['Are the betas causal?', 'No. Co-movement, labelled as such, with R² and n shown.'],
 ]
 
-export default function Landing() {
+export default function Landing({ dark = false }) {
   const terrain = useRef()
   const [events, setEvents] = useState([])
   const [cal, setCal] = useState(null)
@@ -48,6 +48,7 @@ export default function Landing() {
   useEffect(() => {
     if (isStatic) { gsap.set('.reveal, .beat', { autoAlpha: 1 }); return }
     const ctx = gsap.context(() => {
+      if (!window.__basisWheel) { window.__basisWheel = true }
       gsap.utils.toArray('.beat').forEach((el, i) => {
         ScrollTrigger.create({ trigger: el, start: 'top 60%', end: 'bottom 40%', onEnter: () => terrain.current?.set({ ...BEATS[i], camera: BEATS[i].cam, boost: 0.8 }), onEnterBack: () => terrain.current?.set({ ...BEATS[i], camera: BEATS[i].cam, boost: 0.8 }) })
         gsap.fromTo(el, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, scrollTrigger: { trigger: el, start: 'top 75%', end: 'top 45%', scrub: true } })
@@ -63,7 +64,7 @@ export default function Landing() {
 
   return (
     <div className={`-mt-14 relative ${isStatic ? 'static-shot' : ''}`}>
-      <div className="terrain-fixed"><Terrain ref={terrain} /></div>
+      <div className="terrain-fixed"><Terrain ref={terrain} dark={dark} /></div>
 
       {/* HERO */}
       <section id="hero" className="relative z-10 h-[100svh]">
@@ -72,7 +73,7 @@ export default function Landing() {
             <h1 className="h1 max-w-4xl">Meet the odds<br />at the edge.</h1>
             <p className="max-w-sm text-grey-300 text-lg md:pb-4">We turn prediction-market prices into a calibrated, trust-weighted signal.</p>
           </div>
-          <div className="rule mt-8" style={{ background: 'rgba(21,21,21,0.25)' }} />
+          <div className="rule mt-8" style={{ background: dark ? 'rgba(237,237,234,0.3)' : 'rgba(21,21,21,0.25)' }} />
           <div className="mt-4 flex items-center justify-between eyebrow"><span>Basis ©2026 · Kalshi · Polymarket · CME · Deribit</span><a href="#story">Explore ↓</a></div>
         </div>
       </section>
@@ -145,7 +146,7 @@ export default function Landing() {
         <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-12">
           {events.map(e => (
             <Link to={`/events/${e.id}`} key={e.id} className="reveal group">
-              <div className="aspect-square rounded-xl overflow-hidden border border-grey-700 group-hover:border-bone transition-colors"><ContourCard e={e} size={320} /></div>
+              <div className="aspect-square rounded-xl overflow-hidden border border-grey-700 group-hover:border-bone transition-colors"><ContourCard e={e} size={320} dark={dark} /></div>
               <div className="mt-4 flex items-start justify-between gap-3">
                 <div><div className="leading-snug">{e.title}</div><div className="eyebrow mt-1">{e.category} · {pct(e.p_calibrated)} · {e.p_proxy == null ? 'no proxy' : pp(e.basis)}</div></div>
                 <TrustPill score={e.trust_score} leak={e.leakage_flag} />
@@ -166,15 +167,15 @@ export default function Landing() {
       {/* FAQ */}
       <section className="relative z-10 theme-invert px-6 md:px-8 py-24">
         <div className="max-w-3xl">
-          <div className="eyebrow mb-3 reveal" style={{ color: '#9A9A96' }}>Careers · for judges</div>
+          <div className="eyebrow mb-3 reveal" style={{ color: dark ? '#6E6E6A' : '#9A9A96' }}>Careers · for judges</div>
           <h2 className="h2 reveal">Questions we expect.</h2>
           <div className="mt-10 accordion divide-y divide-white/15 border-y border-white/15">
             {FAQ.map(([q, a]) => (
               <details key={q} className="group py-5 reveal"><summary className="flex items-center justify-between gap-6"><span className="text-lg">{q}</span><span className="text-2xl opacity-60 group-open:rotate-45 transition-transform">+</span></summary><p className="mt-3 opacity-80">{a}</p></details>
             ))}
           </div>
-          <div className="mt-16 flex items-center justify-between"><div className="h3">Basis</div><Link to="/app" className="btn-text" style={{ color: '#F2F2F0', borderColor: 'rgba(242,242,240,0.4)' }}>Open the desk</Link></div>
-          <div className="mt-6 eyebrow max-w-2xl leading-relaxed" style={{ color: '#9A9A96' }}>Topographic contours are a metaphor; every number is real: Kalshi and Polymarket public data, CME fed-funds futures, Deribit options. Risk-neutral probabilities. Co-movement, not causation.</div>
+          <div className="mt-16 flex items-center justify-between"><div className="h3">Basis</div><Link to="/app" className="btn-text" style={{ color: dark ? '#151515' : '#F2F2F0', borderColor: dark ? 'rgba(21,21,21,0.4)' : 'rgba(242,242,240,0.4)' }}>Open the desk</Link></div>
+          <div className="mt-6 eyebrow max-w-2xl leading-relaxed" style={{ color: dark ? '#6E6E6A' : '#9A9A96' }}>Topographic contours are a metaphor; every number is real: Kalshi and Polymarket public data, CME fed-funds futures, Deribit options. Risk-neutral probabilities. Co-movement, not causation.</div>
         </div>
       </section>
     </div>

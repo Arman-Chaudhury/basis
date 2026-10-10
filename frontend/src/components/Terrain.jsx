@@ -23,6 +23,8 @@ uniform float uFringe;     // iridescence strength
 uniform float uGrain;
 uniform vec3 uTrail[8];    // mouse ripple trail: x, y, age
 uniform vec3 uBase;
+uniform vec3 uSky;
+uniform float uDark;
 uniform float uForm;       // 0 = event map, 1 = single central form
 uniform float uShape;      // 0 circle → 1 oval → 2 rounded square → 3 triangle
 uniform float uFlow;       // ring flow speed (levels / s)
@@ -103,14 +105,16 @@ void main() {
   // iridescent fringe keyed to the layer index, strongest at the riser
   float k = floor(level);
   float fr = (1.0 - smoothstep(0.0, 0.3, f)) * smoothstep(0.03, 0.4, slope * 0.05);
-  vec3 col = mix(base, spectral(k * 0.07 + h * 0.5), uFringe * fr * (0.4 + 0.6 * near));
-  col += edge * 0.12;
+  vec3 fringeCol = spectral(k * 0.07 + h * 0.5);
+  fringeCol = mix(fringeCol, fringeCol * 0.85 + 0.15, uDark);
+  vec3 col = mix(base, fringeCol, uFringe * fr * (0.4 + 0.6 * near));
+  col += edge * mix(0.12, 0.22, uDark);
   // atmosphere: fade with distance, lift to white at the horizon
   float dist = clamp((-vViewPos.z - 2.5) / 8.5, 0.0, 1.0);
-  col = mix(col, vec3(0.949, 0.949, 0.941), smoothstep(0.0, 1.0, dist));
+  col = mix(col, uSky, smoothstep(0.0, 1.0, dist));
   // centre blow-out: the plateau goes to white, like light pouring from the form
   float centre = clamp((h - 2.3) / 1.0, 0.0, 1.0) * uForm;
-  col = mix(col, vec3(1.0), centre * uGlow);
+  col = mix(col, mix(vec3(1.0), vec3(0.98, 0.96, 0.9), uDark), centre * uGlow);
   col += (hash(gl_FragCoord.xy + fract(uTime)) - 0.5) * uGrain;
   fragColor = vec4(col, 1.0);
 }`
@@ -133,11 +137,11 @@ const CAMS = {
   map: { pos: [0.0, -3.0, 3.4], target: [0, 0.9, 0] },
 }
 
-function Field({ api, speed }) {
+function Field({ api, speed, dark }) {
   const { camera } = useThree()
   const st = useRef({ morph: 0, tMorph: 0, cam: 'hero', form: 1, tForm: 1, shape: 0, tShape: 0, flow: 1.0, boost: 0, phase: 0, trail: [], trailI: 0 })
   const mat = useMemo(() => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: VERT, fragmentShader: FRAG,
-    uniforms: { uCenter: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector2()) }, uHeight: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector3()) }, uSigma: { value: new Float32Array(MAX_EV).fill(0.5) }, uCount: { value: 0 }, uMorph: { value: 0 }, uTime: { value: 0 }, uSteps: { value: 14 }, uFringe: { value: 0.6 }, uGrain: { value: 0.0 }, uTrail: { value: Array.from({ length: 8 }, () => new THREE.Vector3(99, 99, 99)) }, uBase: { value: new THREE.Color('#E9E9E7') }, uForm: { value: 1 }, uShape: { value: 0 }, uFlow: { value: 0.7 }, uFlowPhase: { value: 0 }, uGlow: { value: 0.9 } } }), [])
+    uniforms: { uCenter: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector2()) }, uHeight: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector3()) }, uSigma: { value: new Float32Array(MAX_EV).fill(0.5) }, uCount: { value: 0 }, uMorph: { value: 0 }, uTime: { value: 0 }, uSteps: { value: 14 }, uFringe: { value: 0.6 }, uGrain: { value: 0.0 }, uTrail: { value: Array.from({ length: 8 }, () => new THREE.Vector3(99, 99, 99)) }, uBase: { value: new THREE.Color('#E9E9E7') }, uSky: { value: new THREE.Color('#F2F2F0') }, uDark: { value: 0 }, uForm: { value: 1 }, uShape: { value: 0 }, uFlow: { value: 0.7 }, uFlowPhase: { value: 0 }, uGlow: { value: 0.9 } } }), [])
   const tmp = useMemo(() => ({ v: new THREE.Vector3(), t: new THREE.Vector3() }), [])
   useImperativeHandle(api, () => ({
     setEvents: evs => {
@@ -153,10 +157,12 @@ function Field({ api, speed }) {
       })
       u.uCount.value = n
     },
+    setTheme: dark => { const u = mat.uniforms; u.uDark.value = dark ? 1 : 0; u.uBase.value.set(dark ? '#232327' : '#E9E9E7'); u.uSky.value.set(dark ? '#111113' : '#F2F2F0'); u.uFringe.value = dark ? 0.85 : 0.6; u.uGlow.value = dark ? 0.55 : 0.9 },
     set: ({ morph, camera: c, mouse, form, shape, boost }) => { const s = st.current; if (morph != null) s.tMorph = morph; if (c) s.cam = c; if (form != null) s.tForm = form; if (shape != null) s.tShape = shape; if (boost != null) s.boost = Math.max(s.boost, boost)
       if (mouse) { const last = s.trail[(s.trailI + 7) % 8]; if (!last || Math.hypot(last.x - mouse[0], last.y - mouse[1]) > 0.25) { s.trail[s.trailI] = { x: mouse[0], y: mouse[1], t: 0 }; s.trailI = (s.trailI + 1) % 8 } } },
   }), [mat])
   useEffect(() => { camera.up.set(0, 0, 1); camera.position.set(...CAMS.hero.pos); camera.lookAt(...CAMS.hero.target) }, [])
+  useEffect(() => { api.current?.setTheme?.(dark) }, [dark])
   useFrame((_, delta) => {
     const dt = Math.min(delta, 1 / 30), s = st.current, u = mat.uniforms
     const k = 1 - Math.exp(-dt * 1.6)
@@ -172,6 +178,7 @@ function Field({ api, speed }) {
   return <mesh material={mat}><planeGeometry args={[60, 60, 1, 1]} /></mesh>
 }
 
+function ClearColor({ dark }) { const { gl } = useThree(); useEffect(() => { gl.setClearColor(dark ? '#111113' : '#F2F2F0', 1) }, [dark]); return null }
 function Pointer({ api }) {
   const { gl, camera } = useThree()
   useEffect(() => {
@@ -191,13 +198,14 @@ function Pointer({ api }) {
   return null
 }
 
-const Terrain = forwardRef(function Terrain({ className = '' }, api) {
+const Terrain = forwardRef(function Terrain({ className = '', dark = false }, api) {
   const speed = useRef(1)
   return (
     <div className={`absolute inset-0 ${className}`}>
-      <Canvas dpr={[1, 1.5]} camera={{ fov: 58, near: 0.05, far: 30, position: CAMS.hero.pos }} gl={{ antialias: true, alpha: false }} onCreated={({ gl }) => gl.setClearColor('#F2F2F0', 1)}>
-        <Field api={api} speed={speed} /><Pointer api={api} />
-        <EffectComposer disableNormalPass multisampling={0}><MotionBlur speed={speed} /></EffectComposer>
+      <Canvas dpr={[1, 1.5]} camera={{ fov: 58, near: 0.05, far: 30, position: CAMS.hero.pos }} gl={{ antialias: true, alpha: false }} onCreated={({ gl }) => gl.setClearColor(dark ? '#111113' : '#F2F2F0', 1)}>
+        <ClearColor dark={dark} />
+        <Field api={api} speed={speed} dark={dark} /><Pointer api={api} />
+        <EffectComposer disableNormalPass multisampling={0}><MotionBlur speed={speed} dark={dark} /></EffectComposer>
       </Canvas>
     </div>
   )
@@ -205,7 +213,7 @@ const Terrain = forwardRef(function Terrain({ className = '' }, api) {
 export default Terrain
 
 /* 2D contour thumbnail for one event: its own peak, stepped. */
-export function ContourCard({ e, size = 200 }) {
+export function ContourCard({ e, size = 200, dark = false }) {
   const ref = useRef()
   useEffect(() => {
     const cv = ref.current, ctx = cv.getContext('2d'), S = size * devicePixelRatio; cv.width = cv.height = S
@@ -217,10 +225,10 @@ export function ContourCard({ e, size = 200 }) {
       const lv = Math.max(h, 0) * N, f = lv - Math.floor(lv)
       const g = Math.hypot(a * 2 * x / (s * s), a * 2.6 * y / (s * s)) * Math.exp(-(x * x + y * y * 1.3) / (s * s)) * N
       const shade = 1 - 0.55 * Math.max(0, 1 - f / 0.25) * Math.min(1, g * 0.6 + 0.25)
-      const v = Math.floor(236 * shade); const o = (j * S + i) * 4
+      const v = Math.floor((dark ? 48 : 236) * shade + (dark ? 10 : 0)); const o = (j * S + i) * 4
       d[o] = v; d[o + 1] = v; d[o + 2] = v - 2; d[o + 3] = 255
     }
     ctx.putImageData(img, 0, 0)
-  }, [e.id, size])
+  }, [e.id, size, dark])
   return <canvas ref={ref} style={{ width: size, height: size }} />
 }
