@@ -10,7 +10,7 @@ export default function CalibrationChart({ c, invert = false, height = 520 }) {
   const grid = invert ? '#C9CECE' : COLORS.grid
   const dot = invert ? '#0B0C07' : COLORS.kalshi
   const fit = COLORS.proxy
-  const tip = invert ? 'bg-bone border-grey-300 text-ink' : 'bg-ink border-grey-700 text-bone'
+  const tip = 'bg-ink-2 border-grey-700 text-bone'
   return (
     <div style={{ height }}>
       <ResponsiveContainer>

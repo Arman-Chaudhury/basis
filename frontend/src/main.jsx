@@ -18,11 +18,11 @@ function Shell() {
   const link = ({ isActive }) => `px-3 py-1.5 rounded-full text-sm ${isActive ? 'bg-ink-3 text-bone' : 'text-grey-300 hover:text-bone'}`
   return (
     <div className="min-h-screen">
-      <header className={`sticky top-0 z-30 ${onLanding ? 'bg-transparent mix-blend-difference' : 'bg-ink/80 backdrop-blur border-b border-grey-700/40'}`}>
+      <header className={`sticky top-0 z-30 ${onLanding ? 'bg-transparent' : 'bg-ink/80 backdrop-blur border-b border-grey-700/40'}`}>
         <div className="mx-auto max-w-7xl px-5 h-14 flex items-center gap-6">
-          <Link to="/" className="h3 !text-xl">Basis</Link>
+          <Link to="/" className="font-display text-xl tracking-tight" style={{ fontFamily: 'var(--font-display)' }}>Basis</Link>
           {onLanding ? <nav className="hidden md:flex gap-6 ml-6">
-            {[['#story', 'Story'], ['#lab', 'Lab'], ['#figures', 'Figures'], ['#about', 'About']].map(([h, l]) => <a key={h} href={h} className="eyebrow hover:text-bone">{l}</a>)}
+            {[['#story', 'Story'], ['#lab', 'Lab'], ['#figures', 'Map'], ['#about', 'About']].map(([h, l]) => <a key={h} href={h} className="eyebrow hover:text-bone">{l}</a>)}
           </nav> : <nav className="flex gap-1">
             <NavLink to="/app" className={link}>Desk</NavLink>
             <NavLink to="/calibration" className={link}>Calibration</NavLink>
