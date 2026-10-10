@@ -8,10 +8,11 @@ import { gsap, ScrollTrigger } from '../lib/smooth.js'
 
 /* Scroll captions over the landscape, like "You jump… / We jump…". Each sets the surface and the camera. */
 const BEATS = [
-  { t: 'Raw odds…', morph: 0, cam: 'hero', note: 'every peak is a prediction-market price, as traded' },
-  { t: 'Calibrated.', morph: 1, cam: 'high', note: 'the same map after 628 settled markets correct each price' },
-  { t: 'The basis.', morph: 2, cam: 'low', note: 'height is now the gap to the real market: futures and options' },
-  { t: 'Trust is sharpness.', morph: 1, cam: 'high', note: 'a thin market is a smear, a deep one a spike' },
+  { t: 'The odds move…', shape: 0, form: 1, cam: 'hero', note: 'a prediction-market price, as traded' },
+  { t: 'We calibrate.', shape: 1, form: 1, cam: 'low', note: '628 settled markets correct every price' },
+  { t: 'We compare.', shape: 2, form: 1, cam: 'hero', note: 'futures and options imply their own odds; the gap is the basis' },
+  { t: 'We score trust.', shape: 3, form: 1, cam: 'low', note: 'liquidity, spread, freshness, concentration, horizon' },
+  { t: 'Then we map it.', shape: 3, form: 0, morph: 1, cam: 'map', note: 'every event is a peak; thin peaks are signals, smears are rumors' },
 ]
 const PRINCIPLES = [
   ['01.', 'What we measure', 'A calibrated probability for each event, fit on 628 settled Kalshi markets using the price a day before close. A 40¢ contract resolved YES 30% of the time; a 98¢ contract only 84%.'],
@@ -48,12 +49,12 @@ export default function Landing() {
     if (isStatic) { gsap.set('.reveal, .beat', { autoAlpha: 1 }); return }
     const ctx = gsap.context(() => {
       gsap.utils.toArray('.beat').forEach((el, i) => {
-        ScrollTrigger.create({ trigger: el, start: 'top 60%', end: 'bottom 40%', onEnter: () => terrain.current?.set({ morph: BEATS[i].morph, camera: BEATS[i].cam }), onEnterBack: () => terrain.current?.set({ morph: BEATS[i].morph, camera: BEATS[i].cam }) })
+        ScrollTrigger.create({ trigger: el, start: 'top 60%', end: 'bottom 40%', onEnter: () => terrain.current?.set({ ...BEATS[i], camera: BEATS[i].cam, boost: 0.8 }), onEnterBack: () => terrain.current?.set({ ...BEATS[i], camera: BEATS[i].cam, boost: 0.8 }) })
         gsap.fromTo(el, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, scrollTrigger: { trigger: el, start: 'top 75%', end: 'top 45%', scrub: true } })
         gsap.to(el, { autoAlpha: 0, y: -30, scrollTrigger: { trigger: el, start: 'bottom 55%', end: 'bottom 25%', scrub: true } })
       })
-      ScrollTrigger.create({ trigger: '#hero', start: 'top top', end: 'bottom 50%', onEnter: () => terrain.current?.set({ morph: 0, camera: 'hero' }), onEnterBack: () => terrain.current?.set({ morph: 0, camera: 'hero' }) })
-      ScrollTrigger.create({ trigger: '#lab', start: 'top 60%', onEnter: () => terrain.current?.set({ morph: 1, camera: 'high' }), onEnterBack: () => terrain.current?.set({ morph: 1, camera: 'high' }) })
+      ScrollTrigger.create({ trigger: '#hero', start: 'top top', end: 'bottom 50%', onEnter: () => terrain.current?.set({ form: 1, shape: 0, camera: 'hero' }), onEnterBack: () => terrain.current?.set({ form: 1, shape: 0, camera: 'hero' }) })
+      ScrollTrigger.create({ trigger: '#lab', start: 'top 60%', onEnter: () => terrain.current?.set({ form: 0, morph: 1, camera: 'map' }), onEnterBack: () => terrain.current?.set({ form: 0, morph: 1, camera: 'map' }) })
       gsap.utils.toArray('.reveal').forEach(el => gsap.fromTo(el, { autoAlpha: 0, y: 24 }, { autoAlpha: 1, y: 0, duration: 0.9, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%' } }))
       gsap.to('#hero .hero-copy', { autoAlpha: 0, y: -40, ease: 'none', scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: true } })
     })

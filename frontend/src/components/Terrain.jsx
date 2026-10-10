@@ -19,9 +19,13 @@ uniform float uTime;
 uniform float uSteps;      // contours per unit height
 uniform float uFringe;     // iridescence strength
 uniform float uGrain;
-uniform vec2 uMouse;       // plane coords
-uniform float uMouseStrength;
+uniform vec3 uTrail[8];    // mouse ripple trail: x, y, age
 uniform vec3 uBase;
+uniform float uForm;       // 0 = event map, 1 = single central form
+uniform float uShape;      // 0 circle → 1 oval → 2 rounded square → 3 triangle
+uniform float uFlow;       // ring flow speed (levels / s)
+uniform float uGlow;       // centre blow-out
+uniform float uFlowPhase;
 in vec2 vPlane;
 in vec3 vViewPos;
 out vec4 fragColor;
@@ -43,8 +47,31 @@ float height(vec2 q) {
     h += a * exp(-dot(d, d) / (s * s));
   }
   h += 0.06 * snoise(q * 0.9 + uTime * 0.02) + 0.025 * snoise(q * 2.3 - uTime * 0.03);
-  vec2 dm = q - uMouse;
-  h += uMouseStrength * 0.25 * exp(-dot(dm, dm) / 0.08);
+  return h;
+}
+// signed distances for the central form
+float sdCircle(vec2 q) { return length(q); }
+float sdOval(vec2 q) { return length(q * vec2(0.78, 1.25)); }
+float sdSquare(vec2 q) { vec2 a = abs(q); return pow(pow(a.x, 5.0) + pow(a.y, 5.0), 0.2); }
+float sdTri(vec2 q) { q.y = -q.y; const float k = 1.7320508; q.x = abs(q.x) - 1.0; q.y = q.y + 1.0 / k; if (q.x + k * q.y > 0.0) q = vec2(q.x - k * q.y, -k * q.x - q.y) / 2.0; q.x -= clamp(q.x, -2.0, 0.0); return (-length(q) * sign(q.y)) * 0.9 + 1.0; }
+float formHeight(vec2 q) {
+  vec2 c = q * 0.42;
+  float d0 = sdCircle(c), d1 = sdOval(c), d2 = sdSquare(c), d3 = sdTri(c * 1.15);
+  float t = clamp(uShape, 0.0, 3.0);
+  float d = t < 1.0 ? mix(d0, d1, t) : t < 2.0 ? mix(d1, d2, t - 1.0) : mix(d2, d3, t - 2.0);
+  d += 0.05 * snoise(q * 0.8 + uTime * 0.05);
+  // a cone: evenly spaced rings all the way out, flattening to a plateau at the centre
+  return 2.2 * (1.0 - smoothstep(0.0, 1.0, d * 0.5)) + 0.9 * exp(-d * d * 3.0);
+}
+float surface(vec2 q) {
+  float h = mix(height(q), formHeight(q), uForm);
+  for (int i = 0; i < 8; i++) {
+    vec3 tr = uTrail[i];
+    vec2 dm = q - tr.xy;
+    float age = tr.z;
+    float ring = exp(-dm.x * dm.x / 0.35 - dm.y * dm.y / 0.35);
+    h += 0.22 * ring * exp(-age * 1.6) * sin(age * 6.0 - length(dm) * 3.0);
+  }
   return h;
 }
 vec3 spectral(float t) { // soft rainbow
@@ -53,30 +80,35 @@ vec3 spectral(float t) { // soft rainbow
 void main() {
   vec2 q = vPlane;
   float e = 0.012;
-  float h = height(q);
-  float hx = height(q + vec2(e, 0.0)) - height(q - vec2(e, 0.0));
-  float hy = height(q + vec2(0.0, e)) - height(q - vec2(0.0, e));
+  float h = surface(q);
+  float hx = surface(q + vec2(e, 0.0)) - surface(q - vec2(e, 0.0));
+  float hy = surface(q + vec2(0.0, e)) - surface(q - vec2(0.0, e));
   vec3 n = normalize(vec3(-hx / (2.0 * e) * 0.35, -hy / (2.0 * e) * 0.35, 1.0));
   vec3 L = normalize(vec3(-0.5, -0.35, 0.8));
   float diffuse = 0.75 + 0.25 * max(dot(n, L), 0.0);
 
-  float level = h * uSteps + uTime * 0.25;   // rings rise slowly
+  float level = h * uSteps - uFlowPhase;   // rings flow outward from the centre toward you
   float f = fract(level);
   float slope = length(vec2(hx, hy)) / (2.0 * e) * uSteps;
   float aa = clamp(slope * 0.02, 0.004, 0.08);
   // riser shadow: just above each step edge the next layer shades the one below
-  float shadow = 1.0 - 0.7 * (1.0 - smoothstep(0.0, 0.26, f)) * smoothstep(0.02, 0.4, slope * 0.05 + 0.02);
+  float shadow = 1.0 - 0.8 * (1.0 - smoothstep(0.0, 0.3, f)) * smoothstep(0.02, 0.4, slope * 0.05 + 0.02);
   // top-edge highlight
   float edge = 1.0 - smoothstep(0.0, aa * 2.0, abs(f - 0.98));
+  float near = 1.0 - clamp((-vViewPos.z - 2.0) / 9.0, 0.0, 1.0);
+  shadow = mix(1.0, shadow, 0.35 + 0.65 * near);
   vec3 base = uBase * diffuse * shadow;
   // iridescent fringe keyed to the layer index, strongest at the riser
   float k = floor(level);
   float fr = (1.0 - smoothstep(0.0, 0.3, f)) * smoothstep(0.03, 0.4, slope * 0.05);
-  vec3 col = mix(base, spectral(k * 0.07 + 0.1 * uTime * 0.0 + h * 0.5), uFringe * fr);
+  vec3 col = mix(base, spectral(k * 0.07 + h * 0.5), uFringe * fr * (0.4 + 0.6 * near));
   col += edge * 0.12;
   // atmosphere: fade with distance, lift to white at the horizon
-  float dist = clamp((-vViewPos.z - 1.5) / 6.0, 0.0, 1.0);
-  col = mix(col, vec3(0.96), dist * 0.65);
+  float dist = clamp((-vViewPos.z - 2.5) / 8.5, 0.0, 1.0);
+  col = mix(col, vec3(0.949, 0.949, 0.941), smoothstep(0.0, 1.0, dist));
+  // centre blow-out: the plateau goes to white, like light pouring from the form
+  float centre = clamp((h - 2.3) / 1.0, 0.0, 1.0) * uForm;
+  col = mix(col, vec3(1.0), centre * uGlow);
   col += (hash(gl_FragCoord.xy + fract(uTime)) - 0.5) * uGrain;
   fragColor = vec4(col, 1.0);
 }`
@@ -86,23 +118,24 @@ uniform mat4 modelViewMatrix, projectionMatrix;
 in vec3 position; in vec2 uv;
 out vec2 vPlane; out vec3 vViewPos;
 void main() {
-  vPlane = (uv - 0.5) * 7.0;
+  vPlane = (uv - 0.5) * 30.0;
   vec4 mv = modelViewMatrix * vec4(position, 1.0);
   vViewPos = mv.xyz;
   gl_Position = projectionMatrix * mv;
 }`
 
 const CAMS = {
-  hero: { pos: [0.0, -3.6, 2.5], target: [0, 0.6, 0] },
-  high: { pos: [0.0, -2.2, 4.2], target: [0, 0.2, 0] },
-  low: { pos: [1.2, -4.2, 1.6], target: [0.2, 0.4, 0] },
+  hero: { pos: [0.0, -2.4, 2.1], target: [0, 1.0, 0.0] },
+  high: { pos: [0.0, -1.4, 3.2], target: [0, 0.8, 0.0] },
+  low: { pos: [1.1, -2.5, 2.0], target: [0.1, 0.8, 0.0] },
+  map: { pos: [0.0, -3.0, 3.4], target: [0, 0.9, 0] },
 }
 
 function Field({ api }) {
   const { camera } = useThree()
-  const st = useRef({ morph: 0, tMorph: 0, cam: 'hero', mouse: [0, 0], mouseS: 0, mouseT: 0 })
+  const st = useRef({ morph: 0, tMorph: 0, cam: 'hero', form: 1, tForm: 1, shape: 0, tShape: 0, flow: 1.0, boost: 0, phase: 0, trail: [], trailI: 0 })
   const mat = useMemo(() => new THREE.RawShaderMaterial({ glslVersion: THREE.GLSL3, vertexShader: VERT, fragmentShader: FRAG,
-    uniforms: { uCenter: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector2()) }, uHeight: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector3()) }, uSigma: { value: new Float32Array(MAX_EV).fill(0.5) }, uCount: { value: 0 }, uMorph: { value: 0 }, uTime: { value: 0 }, uSteps: { value: 14 }, uFringe: { value: 0.45 }, uGrain: { value: 0.06 }, uMouse: { value: new THREE.Vector2(99, 99) }, uMouseStrength: { value: 0 }, uBase: { value: new THREE.Color('#E9E9E7') } } }), [])
+    uniforms: { uCenter: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector2()) }, uHeight: { value: Array.from({ length: MAX_EV }, () => new THREE.Vector3()) }, uSigma: { value: new Float32Array(MAX_EV).fill(0.5) }, uCount: { value: 0 }, uMorph: { value: 0 }, uTime: { value: 0 }, uSteps: { value: 14 }, uFringe: { value: 0.6 }, uGrain: { value: 0.06 }, uTrail: { value: Array.from({ length: 8 }, () => new THREE.Vector3(99, 99, 99)) }, uBase: { value: new THREE.Color('#E9E9E7') }, uForm: { value: 1 }, uShape: { value: 0 }, uFlow: { value: 0.7 }, uFlowPhase: { value: 0 }, uGlow: { value: 0.9 } } }), [])
   const tmp = useMemo(() => ({ v: new THREE.Vector3(), t: new THREE.Vector3() }), [])
   useImperativeHandle(api, () => ({
     setEvents: evs => {
@@ -118,18 +151,22 @@ function Field({ api }) {
       })
       u.uCount.value = n
     },
-    set: ({ morph, camera: c, mouse }) => { const s = st.current; if (morph != null) s.tMorph = morph; if (c) s.cam = c; if (mouse) { s.mouse = mouse; s.mouseS = 1; s.mouseT = 0 } },
+    set: ({ morph, camera: c, mouse, form, shape, boost }) => { const s = st.current; if (morph != null) s.tMorph = morph; if (c) s.cam = c; if (form != null) s.tForm = form; if (shape != null) s.tShape = shape; if (boost != null) s.boost = Math.max(s.boost, boost)
+      if (mouse) { const last = s.trail[(s.trailI + 7) % 8]; if (!last || Math.hypot(last.x - mouse[0], last.y - mouse[1]) > 0.25) { s.trail[s.trailI] = { x: mouse[0], y: mouse[1], t: 0 }; s.trailI = (s.trailI + 1) % 8 } } },
   }), [mat])
   useEffect(() => { camera.up.set(0, 0, 1); camera.position.set(...CAMS.hero.pos); camera.lookAt(...CAMS.hero.target) }, [])
   useFrame((_, delta) => {
     const dt = Math.min(delta, 1 / 30), s = st.current, u = mat.uniforms
-    s.morph += (s.tMorph - s.morph) * (1 - Math.exp(-dt * 1.6))
-    u.uMorph.value = s.morph; u.uTime.value += dt
-    s.mouseT += dt; u.uMouseStrength.value = s.mouseS * Math.exp(-s.mouseT * 1.2); u.uMouse.value.set(s.mouse[0], s.mouse[1])
+    const k = 1 - Math.exp(-dt * 1.6)
+    s.morph += (s.tMorph - s.morph) * k; s.form += (s.tForm - s.form) * k; s.shape += (s.tShape - s.shape) * k * 0.8
+    s.boost *= Math.exp(-dt * 2.0)
+    s.phase += dt * (s.flow + s.boost)
+    u.uMorph.value = s.morph; u.uForm.value = s.form; u.uShape.value = s.shape; u.uFlowPhase.value = s.phase; u.uTime.value += dt
+    for (let i = 0; i < 8; i++) { const tr = s.trail[i]; if (tr) { tr.t += dt; u.uTrail.value[i].set(tr.x, tr.y, tr.t) } }
     const c = CAMS[s.cam] || CAMS.hero
     tmp.v.set(...c.pos); camera.position.lerp(tmp.v, 1 - Math.exp(-dt * 1.2)); tmp.t.set(...c.target); camera.lookAt(tmp.t)
   })
-  return <mesh material={mat}><planeGeometry args={[14, 14, 1, 1]} /></mesh>
+  return <mesh material={mat}><planeGeometry args={[60, 60, 1, 1]} /></mesh>
 }
 
 function Pointer({ api }) {
@@ -140,6 +177,12 @@ function Pointer({ api }) {
       const r = gl.domElement.getBoundingClientRect(); m.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1)
       ray.setFromCamera(m, camera); if (ray.ray.intersectPlane(plane, p)) api.current?.set({ mouse: [p.x / 2, p.y / 2] })
     }
+    const onWheel = e => api.current?.set({ boost: Math.min(Math.abs(e.deltaY) / 400, 1.2) })
+    window.addEventListener('wheel', onWheel, { passive: true })
+    const _c = () => window.removeEventListener('wheel', onWheel)
+    window.__terrainWheelCleanup = _c
+    {
+    }
     window.addEventListener('pointermove', onMove); return () => window.removeEventListener('pointermove', onMove)
   }, [])
   return null
@@ -148,7 +191,7 @@ function Pointer({ api }) {
 const Terrain = forwardRef(function Terrain({ className = '' }, api) {
   return (
     <div className={`absolute inset-0 ${className}`}>
-      <Canvas dpr={[1, 1.5]} camera={{ fov: 40, near: 0.1, far: 30, position: CAMS.hero.pos }} gl={{ antialias: true, alpha: false }} onCreated={({ gl }) => gl.setClearColor('#F2F2F0', 1)}>
+      <Canvas dpr={[1, 1.5]} camera={{ fov: 58, near: 0.05, far: 30, position: CAMS.hero.pos }} gl={{ antialias: true, alpha: false }} onCreated={({ gl }) => gl.setClearColor('#F2F2F0', 1)}>
         <Field api={api} /><Pointer api={api} />
       </Canvas>
     </div>
